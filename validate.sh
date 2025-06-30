@@ -4,23 +4,26 @@ set -e
 XML="invoice.xml"
 OUTPUT="result.xml"
 
-# Determine which schematron to use
 if [ "$UBL_BE" == "true" ]; then
-    echo "Using Belgian-specific schematron: GLOBALUBL.BE.sch"
+    # Using Belgian-specific schematron: GLOBALUBL.BE.sch
     SCHEMATRON="GLOBALUBL.BE.sch"
-    java -jar saxon.jar -s:$SCHEMATRON -xsl:schxslt2/transpile.xsl -o:compiled.xsl
-    java -jar saxon.jar -s:$XML -xsl:compiled.xsl -o:$OUTPUT
+    java -jar saxon.jar -s:$SCHEMATRON -xsl:schxslt2/transpile.xsl -o:compiled_be.xsl
+    java -jar saxon.jar -s:$XML -xsl:compiled_be.xsl -o:$OUTPUT
 else
-    echo "Trying CEN-EN16931-UBL.sch..."
+    # Running CEN-EN16931-UBL.sch...
     SCHEMATRON="CEN-EN16931-UBL.sch"
     java -jar saxon.jar -s:$SCHEMATRON -xsl:schxslt2/transpile.xsl -o:compiled_cen.xsl
-    if java -jar saxon.jar -s:$XML -xsl:compiled_cen.xsl -o:$OUTPUT; then
-        echo "CEN validation passed or completed."
-    else
-        echo "CEN validation failed. Trying PEPPOL-EN16931-UBL.sch..."
+    java -jar saxon.jar -s:$XML -xsl:compiled_cen.xsl -o:result_cen.xml
+
+    # Check if CEN validation passed (no failed assertions)
+    if ! grep -q "<svrl:failed-assert" result_cen.xml; then
+        # CEN validation passed. Running PEPPOL-EN16931-UBL.sch...
         SCHEMATRON="PEPPOL-EN16931-UBL.sch"
         java -jar saxon.jar -s:$SCHEMATRON -xsl:schxslt2/transpile.xsl -o:compiled_peppol.xsl
         java -jar saxon.jar -s:$XML -xsl:compiled_peppol.xsl -o:$OUTPUT
+    else
+        # CEN validation failed. Skipping PEPPOL validation.
+        cp result_cen.xml $OUTPUT
     fi
 fi
 
@@ -31,4 +34,3 @@ if [ "$PLAIN_TEXT" == "true" ]; then
 else
     xmllint --format $OUTPUT
 fi
-
