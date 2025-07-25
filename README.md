@@ -14,7 +14,7 @@ A Docker image to make it easy to do a [schematron](https://schematron.com/) val
 You can run it directly from ghcr like this:
 
 ```
-docker run --rm -e PLAIN_TEXT=true -v ./your-invoice.xml:/app/invoice.xml:ro ghcr.io/roel4d/peppol_schematron:latest
+docker run --rm -e PLAIN_TEXT=true -v ./your-invoice.xml:/app/invoice.xml:ro ghcr.io/mooroe/peppol_schematron:latest
 ```
 
 ## Without using the image from the registry
